@@ -16,24 +16,25 @@ class GroupRecordsPage extends StatefulWidget {
 }
 
 class _GroupRecordsPageState extends State<GroupRecordsPage> {
-  late Map<String, double> studentPercentages = {};
+  late Map<String, double> studentPercentages;
 
   @override
   void initState() {
     super.initState();
+    studentPercentages = {}; // Initialize with an empty map
     _loadStudentPercentages();
   }
 
   Future<void> _loadStudentPercentages() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getString('studentPercentages_${widget.groupId}');
-    if (data != null) {
-      setState(() {
-        studentPercentages = Map<String, double>.from(
-          json.decode(data).map((key, value) => MapEntry(key, value.toDouble())),
-        );
-      });
-    }
+    setState(() {
+      studentPercentages = data != null
+          ? Map<String, double>.from(
+              json.decode(data).map((key, value) => MapEntry(key, value.toDouble())),
+            )
+          : {}; // Fallback to an empty map if no data is found
+    });
   }
 
   Future<void> _saveStudentPercentages() async {
@@ -49,6 +50,26 @@ class _GroupRecordsPageState extends State<GroupRecordsPage> {
       studentPercentages[student] = percentage;
     });
     _saveStudentPercentages();
+  }
+
+  void _showStudentPercentageDialog(String student, double percentage) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Attendance Details'),
+          content: Text(
+            'Student: $student\nAttendance: ${percentage.toStringAsFixed(1)}%',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -86,6 +107,9 @@ class _GroupRecordsPageState extends State<GroupRecordsPage> {
                 ),
               ),
               subtitle: Text('Attendance: ${percentage.toStringAsFixed(1)}%'),
+              onTap: () {
+                _showStudentPercentageDialog(student, percentage);
+              },
               trailing: IconButton(
                 icon: Icon(Icons.edit),
                 onPressed: () {

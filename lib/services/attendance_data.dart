@@ -36,6 +36,7 @@ class AttendanceData {
     _attendance[groupId]![studentName]![date] = isPresent;
     await _saveData(); // Save data immediately after toggling
     await calculateAndStorePercentages(groupId); // Recalculate percentages
+    await saveToJson(); // Save to JSON for persistence
   }
 
   Future<void> resetTodayAttendance(String groupId) async {
@@ -44,6 +45,7 @@ class AttendanceData {
       records[date] = false; // Reset today's attendance to false
     });
     await _saveData(); // Save the reset data
+    await saveToJson(); // Save to JSON for persistence
   }
 
   Future<void> saveAttendance(String groupId, Map<String, bool> attendanceData) async {
@@ -57,6 +59,7 @@ class AttendanceData {
 
     await _saveData();
     await calculateAndStorePercentages(groupId); // Recalculate percentages
+    await saveToJson(); // Save to JSON for persistence
   }
 
   Future<void> calculateAndStorePercentages(String groupId) async {
@@ -64,9 +67,9 @@ class AttendanceData {
     final percentages = <String, double>{};
 
     records.forEach((name, attendance) {
-      final total = attendance.length;
-      final presentCount = attendance.values.where((v) => v).length;
-      percentages[name] = total == 0 ? 0.0 : (presentCount / total) * 100;
+        final total = attendance.length; // Total days attendance was recorded
+        final presentCount = attendance.values.where((v) => v).length; // Days marked present
+        percentages[name] = total == 0 ? 0.0 : (presentCount / total) * 100; // Calculate percentage
     });
 
     final prefs = await SharedPreferences.getInstance();
@@ -103,12 +106,14 @@ class AttendanceData {
     _attendance.remove(groupId);
     _studentInfo.remove(groupId);
     await _saveData(); // Ensure changes are saved persistently
+    await saveToJson(); // Save to JSON for persistence
   }
 
   Future<void> deleteStudent(String groupId, String studentName) async {
     _attendance[groupId]?.remove(studentName);
     _studentInfo[groupId]?.remove(studentName);
     await _saveData(); // Ensure changes are saved persistently
+    await saveToJson(); // Save to JSON for persistence
   }
 
   Future<void> loadData() async {
@@ -121,6 +126,7 @@ class AttendanceData {
       _attendance = {};
       _studentInfo = {};
     }
+    await loadFromJson(); // Load data from JSON for persistence
   }
 
   Future<void> saveCurrentAttendance(String groupId, Map<String, bool> currentAttendance) async {
@@ -215,6 +221,7 @@ class AttendanceData {
       }
 
       await _saveData(); // Save the updated data persistently
+      await saveToJson(); // Save to JSON for persistence
     } catch (e) {
       throw Exception('Failed to import CSV: $e');
     }
@@ -283,5 +290,34 @@ class AttendanceData {
     _studentInfo[groupId] ??= {};
     _studentInfo[groupId]![studentName] = percentage.toString();
     saveToJson(); // Save changes to JSON
+  }
+
+  Future<Map<String, bool>> getStudentAttendance(String groupId, String studentName) async {
+    // Retrieve attendance records for a specific student
+    await loadFromJson(); // Ensure the latest data is loaded
+    return _attendance[groupId]?[studentName] ?? {};
+  }
+
+  Future<void> saveStudentAttendance(String groupId, String studentName, Map<String, bool> attendanceData) async {
+    // Save attendance records for a specific student
+    _attendance[groupId] ??= {};
+    _attendance[groupId]![studentName] = attendanceData;
+    await saveToJson(); // Save to JSON for persistence
+  }
+
+  Future<double> getStudentAttendancePercentage(String groupId, String studentName) async {
+    // Calculate and retrieve the attendance percentage for a specific student
+    final attendance = await getStudentAttendance(groupId, studentName);
+    final total = attendance.length;
+    final presentCount = attendance.values.where((v) => v).length;
+    return total == 0 ? 0.0 : (presentCount / total) * 100;
+  }
+
+  Future<void> updateStudentAttendance(String groupId, String studentName, String date, bool isPresent) async {
+    // Update attendance for a specific student on a specific date
+    _attendance[groupId] ??= {};
+    _attendance[groupId]![studentName] ??= {};
+    _attendance[groupId]![studentName]![date] = isPresent;
+    await saveToJson(); // Save to JSON for persistence
   }
 }

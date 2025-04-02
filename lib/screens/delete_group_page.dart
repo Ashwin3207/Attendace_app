@@ -17,10 +17,10 @@ class DeleteGroupPage extends StatefulWidget {
   });
 
   @override
-  _DeleteGroupPageState createState() => _DeleteGroupPageState();
+  DeleteGroupPageState createState() => DeleteGroupPageState();
 }
 
-class _DeleteGroupPageState extends State<DeleteGroupPage> {
+class DeleteGroupPageState extends State<DeleteGroupPage> {
   Future<void> _saveGroupsToJson() async {
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -7,6 +7,7 @@ import '../services/attendance_data.dart'; // Import attendanceData
 import 'package:share_plus/share_plus.dart'; // Import the share_plus package
 // Import file picker package
 import 'package:intl/intl.dart'; // Import for date formatting
+import 'student_details_page.dart'; // Import the new screen
 
 class RecordsPage extends StatefulWidget {
   final List<String> groups;
@@ -72,11 +73,12 @@ class _RecordsPageState extends State<RecordsPage> {
       final filePath = '${attendanceFolder.path}/$groupId-AttendanceRecords.xlsx';
       final fileBytes = excel.save();
       if (fileBytes == null) {
+        log('Error: Excel file bytes are null.');
         return null;
       }
 
       final file = File(filePath);
-      await file.writeAsBytes(fileBytes);
+      await file.writeAsBytes(fileBytes, flush: true); // Ensure the file is flushed to disk
 
       return filePath;
     } catch (e) {
@@ -84,7 +86,6 @@ class _RecordsPageState extends State<RecordsPage> {
       return null;
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +147,22 @@ class _RecordsPageState extends State<RecordsPage> {
                       ListTile(
                         title: Text('${record['name']} (${record['regNo']})'), // Include regNo
                         subtitle: Text('Attendance: ${(record['percentage'] as double?)?.toStringAsFixed(1) ?? '0.0'}%'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.info),
+                          onPressed: () {
+                            // Navigate to the student details page
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StudentDetailsPage(
+                                  studentName: record['name'] as String,
+                                  regNo: record['regNo'] as String,
+                                  percentage: record['percentage'] as double,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ListTile(
                       leading: const Icon(Icons.share),
@@ -153,8 +170,15 @@ class _RecordsPageState extends State<RecordsPage> {
                       onTap: () async {
                         final filePath = await _exportGroupToExcel(groupId);
                         if (filePath != null) {
-                          if (context.mounted) {
+                          try {
                             await Share.shareXFiles([XFile(filePath)], text: 'Attendance Record for $groupId');
+                          } catch (e) {
+                            log('Error sharing file: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Failed to share the Excel file.')),
+                              );
+                            }
                           }
                         } else {
                           if (context.mounted) {

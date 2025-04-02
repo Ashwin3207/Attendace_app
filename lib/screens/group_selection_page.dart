@@ -5,16 +5,16 @@ class GroupSelectionPage extends StatefulWidget {
   final Map<String, List<Map<String, String>>> groupStudents;
 
   const GroupSelectionPage({
-    Key? key,
+    super.key,
     required this.groups,
     required this.groupStudents,
-  }) : super(key: key);
+  });
 
   @override
-  _GroupSelectionPageState createState() => _GroupSelectionPageState();
+  GroupSelectionPageState createState() => GroupSelectionPageState();
 }
 
-class _GroupSelectionPageState extends State<GroupSelectionPage> {
+class GroupSelectionPageState extends State<GroupSelectionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

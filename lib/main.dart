@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _addGroup(String name) async {
     if (name.isEmpty) {
-      if (!mounted) return;
+      if (!mounted) return; // Ensure widget is still mounted
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Group name cannot be empty.')));
       return;
@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> {
       _groupStudents[name] = [];
     });
     await _saveGroups(); // Save changes persistently
-    if (!mounted) return;
+    if (!mounted) return; // Ensure widget is still mounted
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Group "$name" created successfully.')));
   }
@@ -117,7 +117,7 @@ class _HomePageState extends State<HomePage> {
     try {
       final errors = await attendance.validateCsv(file);
       if (errors.isNotEmpty) {
-        if (!mounted) return;
+        if (!mounted) return; // Ensure widget is still mounted
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('CSV Errors:\n${errors.join('\n')}')));
         return;
@@ -134,6 +134,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
 
+      if (!mounted) return;
       final group = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
